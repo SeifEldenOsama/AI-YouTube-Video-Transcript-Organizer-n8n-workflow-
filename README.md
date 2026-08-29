@@ -134,6 +134,9 @@ AI-youtube-video-transcript-organizer/
 
 This project demonstrates how **AI agents/LLM workflows can be combined with automation, APIs, data processing, and messaging platforms** to create a practical AI-powered application.
 
+## 📨 Demo Telegram bot
+https://t.me/youtube_video_transcript_132_bot
+
 ## 📄 License
 
 This project is available for educational and personal use.
