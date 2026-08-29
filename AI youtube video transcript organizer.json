@@ -1,0 +1,337 @@
+{
+  "name": "AI youtube video transcript organizer",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9c286d56-4806-46ed-a2bc-eeb12f0bb339",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "Bad request - please check your parameters",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "503356b2-87e1-4cb8-9230-ce6d4b0e8163",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('user link').item.json.message.from.id }}",
+        "text": "=Something wrong 😢\nTry to investigate from these 3 things:\n1- Just copy the video link without anything else.\n2- Make sure that you have copied a correct link.\n3- Make sure that the video transcription is enabled.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        -208
+      ],
+      "id": "72cbd7be-43cb-438f-b253-ef027827de32",
+      "name": "error message",
+      "webhookId": "0046511b-aa19-4b18-b530-666b46b9408e",
+      "credentials": {
+        "telegramApi": {
+          "id": "0EWZurZITeuRoLTV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('get video transcript').item.json.content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a content organizer, you will take a transcription from a youtube video, your mission is to organize this content in headers and sections based on the content, and produce an organized message for it.\nSent the organized message with the same language of the content.\nDon't send any symbols like # * and all these things."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        864,
+        96
+      ],
+      "id": "1427710d-47bb-433d-ac32-f11ba45953ba",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        864,
+        288
+      ],
+      "id": "313d8801-6f61-4941-b2ba-ff2a07c15f7d",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "AdqEOLrXaHg85KKk",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('user link').item.json.message.from.id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        96
+      ],
+      "id": "23b83a39-e3d3-4154-a1e8-3022affed862",
+      "name": "send content",
+      "webhookId": "4620c122-38a4-4e65-994a-316223fbd406",
+      "credentials": {
+        "telegramApi": {
+          "id": "0EWZurZITeuRoLTV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -368,
+        0
+      ],
+      "id": "b4c5bab4-0183-48b0-9989-d852d42a6e09",
+      "name": "user link",
+      "webhookId": "2eb57fdd-8246-4155-97f0-177d7b14e75e",
+      "credentials": {
+        "telegramApi": {
+          "id": "0EWZurZITeuRoLTV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getTranscript",
+        "videoUrl": "={{ $json.message.text }}",
+        "text": true
+      },
+      "type": "n8n-nodes-supadata.supadata",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "f7f2d8b8-a7f9-401f-a147-a99dbcd791ea",
+      "name": "get video transcript",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "supadataApi": {
+          "id": "gpdhxcsvul0HkZbg",
+          "name": "Supadata account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n\n  return {\n    json: {\n      ...data,\n      success: data.content !== undefined\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        0
+      ],
+      "id": "717cf59f-2c65-45eb-99f7-49bed24053d0",
+      "name": "success key"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('user link').item.json.message.from.id }}",
+        "text": "We are working on your video now, may take from 15 sec to 1 min 😊",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        96
+      ],
+      "id": "43fe2a32-940a-41b5-a005-95ff6b5f8a0f",
+      "name": "delay message",
+      "webhookId": "85a52c91-2f69-42ec-99e5-b0dd98a244ce",
+      "credentials": {
+        "telegramApi": {
+          "id": "0EWZurZITeuRoLTV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.text;\nconst maxLength = 4000; // stay safely below Telegram's 4096 limit\n\nconst chunks = [];\n\nfor (let i = 0; i < text.length; i += maxLength) {\n  chunks.push({\n    json: {\n      text: text.slice(i, i + maxLength)\n    }\n  });\n}\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        96
+      ],
+      "id": "45f0b433-ec6b-48f9-9d6e-4240a0819b38",
+      "name": "split long messages"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "error message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delay message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "split long messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "user link": {
+      "main": [
+        [
+          {
+            "node": "get video transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get video transcript": {
+      "main": [
+        [
+          {
+            "node": "success key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "success key": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delay message": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split long messages": {
+      "main": [
+        [
+          {
+            "node": "send content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cd6da79b-b8f0-449f-9e22-9f5f1f801f1d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "986a955a006fd9cfdaf1602b97a793d54eee48ce7738b83b297baa464d4748e0"
+  },
+  "nodeGroups": [],
+  "id": "EYEesIO2paKe4lLN",
+  "tags": []
+}
